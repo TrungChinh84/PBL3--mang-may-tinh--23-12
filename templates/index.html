@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="vi" data-bs-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Firewall Dashboard - PBL3</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --danger-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --warning-gradient: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        --dark-bg: #121212;
+        --card-bg: #1e1e1e;
+        --border-color: #2d2d2d;
+        --text-primary: #ffffff;
+        --text-secondary: #b0b0b0;
+      }
+
+      body {
+        background-color: var(--dark-bg);
+        color: var(--text-primary);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+      }
+
+      .navbar {
+        background: var(--primary-gradient) !important;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        padding: 1rem 0;
+      }
+
+      .navbar-brand {
+        font-weight: 700;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .navbar-brand i {
+        font-size: 1.8rem;
+      }
+
+      .status-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      }
+
+      .status-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+      }
+
+      .status-card.blocked::before {
+        background: var(--danger-gradient);
+      }
+
+      .status-card.service::before {
+        background: var(--warning-gradient);
+      }
+
+      .status-card.time::before {
+        background: var(--success-gradient);
+      }
+
+      .status-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 10px 0;
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .blocked .status-number {
+        background-image: var(--danger-gradient);
+      }
+
+      .service .status-number {
+        background-image: var(--warning-gradient);
+      }
+
+      .time .status-number {
+        background-image: var(--success-gradient);
+      }
+
+      .card-title {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+
+      .service-status {
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-left: 10px;
+      }
+
+      .status-active {
+        background: linear-gradient(135deg, #00b09b, #96c93d);
+        color: white;
+      }
+
+      .status-stopped {
+        background: linear-gradient(135deg, #ff416c, #ff4b2b);
+        color: white;
+      }
+
+      .nav-tabs {
+        border-bottom: 2px solid var(--border-color);
+      }
+
+      .nav-tabs .nav-link {
+        border: none;
+        color: var(--text-secondary);
+        font-weight: 500;
+        padding: 15px 25px;
+        border-radius: 10px 10px 0 0;
+        margin-right: 5px;
+        background: transparent;
+        transition: all 0.3s;
+      }
+
+      .nav-tabs .nav-link:hover {
+        color: var(--text-primary);
+        background: rgba(102, 126, 234, 0.1);
+      }
+
+      .nav-tabs .nav-link.active {
+        background: var(--card-bg);
+        color: #667eea;
+        border-bottom: 3px solid #667eea;
+      }
+
+      .tab-content {
+        background: var(--card-bg);
+        border-radius: 0 15px 15px 15px;
+        padding: 25px;
+        border: 1px solid var(--border-color);
+        border-top: none;
+        margin-top: -1px;
+      }
+
+      .table-custom {
+        background-color: transparent;
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      .table-custom thead th {
+        border-bottom: 2px solid #667eea;
+        background-color: rgba(102, 126, 234, 0.1);
+        color: var(--text-primary);
+        font-weight: 600;
+        padding: 15px;
+      }
+
+      .table-custom tbody tr {
+        border-color: var(--border-color);
+        transition: all 0.3s;
+      }
+
+      .table-custom tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.1);
+      }
+
+      .table-custom tbody td {
+        padding: 15px;
+        vertical-align: middle;
+      }
+
+      .badge-custom {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+
+      .badge-danger {
+        background: var(--danger-gradient);
+        color: white;
+      }
+
+      .badge-success {
+        background: var(--success-gradient);
+        color: white;
+      }
+
+      .btn-custom {
+        background: var(--primary-gradient);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s;
+      }
+
+      .btn-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+      }
+
+      .btn-danger-custom {
+        background: var(--danger-gradient);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s;
+      }
+
+      .btn-danger-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        color: white;
+      }
+
+      .btn-success-custom {
+        background: var(--success-gradient);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s;
+      }
+
+      .btn-success-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        color: white;
+      }
+
+      .form-control {
+        background-color: #2a2a2a;
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 8px;
+        padding: 12px 15px;
+      }
+
+      .form-control:focus {
+        background-color: #2a2a2a;
+        border-color: #667eea;
+        color: var(--text-primary);
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+      }
+
+      .form-label {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .input-group .btn {
+        border-radius: 8px;
+      }
+
+      pre {
+        background-color: #1a1a1a;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: #4dff4d;
+        font-family: "Courier New", monospace;
+        font-size: 0.9rem;
+        max-height: 500px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .btn-service-toggle {
+        background: var(--warning-gradient);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+      }
+
+      .btn-service-toggle:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(246, 211, 101, 0.4);
+        color: white;
+      }
+
+      .last-update {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-style: italic;
+      }
+
+      .alert-row {
+        animation: fadeIn 0.5s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .manual-control {
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px dashed var(--border-color);
+      }
+
+      .refresh-btn {
+        background: rgba(79, 172, 254, 0.1);
+        border: 1px solid rgba(79, 172, 254, 0.3);
+        color: #4facfe;
+        transition: all 0.3s;
+      }
+
+      .refresh-btn:hover {
+        background: rgba(79, 172, 254, 0.2);
+        color: #4facfe;
+      }
+
+      .container {
+        padding-bottom: 50px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <span class="navbar-brand">
+          <i class="fas fa-shield-alt"></i>
+          Firewall Dashboard - PBL3
+        </span>
+        <div class="d-flex align-items-center">
+          <span class="me-3 last-update" id="last-update-text"
+            >Cập nhật: --:--:--</span
+          >
+          <a href="/logout" class="btn btn-outline-light btn-sm">
+            <i class="fas fa-sign-out-alt me-1"></i>Đăng xuất
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+      <!-- Status Cards -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-4">
+          <div class="status-card blocked">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div class="card-title">
+                    <i class="fas fa-ban me-2"></i>IP ĐANG BỊ CHẶN
+                  </div>
+                  <div class="status-number" id="blocked-count">0</div>
+                </div>
+                <div class="icon-display">
+                  <i class="fas fa-shield-alt fa-3x" style="opacity: 0.2"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="status-card service">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div class="card-title">
+                    <i class="fas fa-robot me-2"></i>AUTO-BLOCK SERVICE
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span class="status-number" id="service-status">...</span>
+                    <span id="service-badge" class="service-status"></span>
+                  </div>
+                </div>
+                <div class="icon-display">
+                  <i class="fas fa-cogs fa-3x" style="opacity: 0.2"></i>
+                </div>
+              </div>
+              <div class="mt-3">
+                <button
+                  class="btn-service-toggle w-100"
+                  onclick="toggleService()"
+                >
+                  <i class="fas fa-power-off me-2"></i>BẬT/TẮT DỊCH VỤ
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="status-card time">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div class="card-title">
+                    <i class="fas fa-clock me-2"></i>CẬP NHẬT CUỐI
+                  </div>
+                  <div class="status-number" id="last-update">--:--:--</div>
+                </div>
+                <div class="icon-display">
+                  <i class="fas fa-sync-alt fa-3x" style="opacity: 0.2"></i>
+                </div>
+              </div>
+              <div class="mt-3">
+                <div class="text-muted small">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Tự động cập nhật mỗi 5 giây
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Tabs -->
+      <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link active"
+            id="alerts-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#alerts"
+            type="button"
+            role="tab"
+          >
+            <i class="fas fa-exclamation-triangle me-2"></i>CẢNH BÁO & LOG
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="rules-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#rules"
+            type="button"
+            role="tab"
+          >
+            <i class="fas fa-list-alt me-2"></i>RULES IPTABLES
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="config-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#config"
+            type="button"
+            role="tab"
+          >
+            <i class="fas fa-cog me-2"></i>CẤU HÌNH HỆ THỐNG
+          </button>
+        </li>
+      </ul>
+
+      <!-- Tab Content -->
+      <div class="tab-content" id="dashboardTabsContent">
+        <!-- Tab 1: Alerts -->
+        <div class="tab-pane fade show active" id="alerts" role="tabpanel">
+          <!-- Manual IP Control -->
+          <div class="manual-control">
+            <h5 class="mb-3">
+              <i class="fas fa-hand-point-right me-2"></i>XỬ LÝ IP THỦ CÔNG
+            </h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <input
+                  type="text"
+                  id="manual-ip"
+                  class="form-control"
+                  placeholder="Nhập địa chỉ IP (VD: 192.168.1.100)"
+                />
+              </div>
+              <div class="col-md-3">
+                <button
+                  class="btn-danger-custom w-100"
+                  onclick="manualAction('block')"
+                >
+                  <i class="fas fa-ban me-2"></i>CHẶN NGAY
+                </button>
+              </div>
+              <div class="col-md-3">
+                <button
+                  class="btn-success-custom w-100"
+                  onclick="manualAction('unblock')"
+                >
+                  <i class="fas fa-check-circle me-2"></i>GỠ CHẶN
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alerts Table -->
+          <div class="table-responsive">
+            <table class="table table-custom">
+              <thead>
+                <tr>
+                  <th width="180">
+                    <i class="fas fa-clock me-1"></i>THỜI GIAN
+                  </th>
+                  <th width="150">
+                    <i class="fas fa-network-wired me-1"></i>IP NGUỒN
+                  </th>
+                  <th width="120"><i class="fas fa-bolt me-1"></i>HÀNH ĐỘNG</th>
+                  <th><i class="fas fa-comment-alt me-1"></i>LÝ DO / MÔ TẢ</th>
+                </tr>
+              </thead>
+              <tbody id="alert-table-body">
+                <!-- Data will be loaded here -->
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-4">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Đang tải dữ liệu
+                    cảnh báo...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Rules -->
+        <div class="tab-pane fade" id="rules" role="tabpanel">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+              <i class="fas fa-fire me-2"></i>IPTABLES RULES - CHAIN INPUT
+            </h5>
+            <button class="btn refresh-btn" onclick="loadRules()">
+              <i class="fas fa-redo-alt me-2"></i>LÀM MỚI RULES
+            </button>
+          </div>
+          <pre id="iptables-rules" class="p-3">
+Đang tải rules từ hệ thống...</pre
+          >
+        </div>
+
+        <!-- Tab 3: Config -->
+        <div class="tab-pane fade" id="config" role="tabpanel">
+          <h5 class="mb-4">
+            <i class="fas fa-sliders-h me-2"></i>CẤU HÌNH TỰ ĐỘNG BLOCK
+          </h5>
+
+          <form id="config-form">
+            <div class="row g-4">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-label">
+                    <i class="fas fa-wave-square me-1"></i>Ngưỡng SYN (gói/phút)
+                  </label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="conf-syn"
+                    min="1"
+                    max="1000"
+                    placeholder="Số lượng SYN packets tối đa mỗi phút"
+                  />
+                  <div class="form-text">
+                    Khi vượt quá ngưỡng này, IP sẽ bị chặn tự động
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-label">
+                    <i class="fas fa-plug me-1"></i>Ngưỡng Connection
+                  </label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="conf-conn"
+                    min="1"
+                    max="5000"
+                    placeholder="Số connection đồng thời tối đa"
+                  />
+                  <div class="form-text">
+                    Số lượng kết nối đồng thời từ một IP
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-label">
+                    <i class="fas fa-hourglass-half me-1"></i>Thời gian chặn
+                    (giây)
+                  </label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="conf-ban"
+                    min="0"
+                    max="86400"
+                    placeholder="0 = chặn vĩnh viễn"
+                  />
+                  <div class="form-text">
+                    Thời gian IP bị chặn (0 = vĩnh viễn)
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-label">
+                    <i class="fas fa-user-shield me-1"></i>Whitelist IP
+                  </label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="conf-white"
+                    placeholder="VD: 192.168.1.1, 10.0.0.1"
+                  />
+                  <div class="form-text">
+                    Các IP được phép, cách nhau bởi dấu phẩy
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top border-secondary">
+              <button
+                type="button"
+                class="btn-custom px-4"
+                onclick="saveConfig()"
+              >
+                <i class="fas fa-save me-2"></i>LƯU CẤU HÌNH
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary ms-2"
+                onclick="loadConfig()"
+              >
+                <i class="fas fa-undo me-2"></i>KHÔI PHỤC MẶC ĐỊNH
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap & JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // --- API Utilities ---
+      async function apiCall(url, method = "GET", body = null) {
+        const opts = {
+          method: method,
+          headers: { "Content-Type": "application/json" },
+        };
+        if (body) opts.body = JSON.stringify(body);
+
+        try {
+          const res = await fetch(url, opts);
+          if (res.redirected) {
+            window.location.href = res.url;
+            return null;
+          }
+          return await res.json();
+        } catch (error) {
+          console.error("API Error:", error);
+          showAlert("Lỗi kết nối đến server!", "danger");
+          return null;
+        }
+      }
+
+      // --- Status Update ---
+      function updateStatus() {
+        apiCall("/api/status").then((data) => {
+          if (!data) return;
+
+          // Update blocked count
+          document.getElementById("blocked-count").innerText =
+            data.blocked_count;
+
+          // Update service status
+          const serviceText = document.getElementById("service-status");
+          const serviceBadge = document.getElementById("service-badge");
+          serviceText.innerText = data.service_status;
+
+          if (data.service_status === "ACTIVE") {
+            serviceBadge.className = "service-status status-active";
+            serviceBadge.innerText = "ĐANG HOẠT ĐỘNG";
+          } else {
+            serviceBadge.className = "service-status status-stopped";
+            serviceBadge.innerText = "DỪNG";
+          }
+
+          // Update timestamp
+          const timeElement = document.getElementById("last-update");
+          const timeText = document.getElementById("last-update-text");
+          timeElement.innerText = data.updated_at;
+          timeText.innerText = `Cập nhật: ${data.updated_at}`;
+
+          // Update alerts table
+          updateAlertsTable(data.alerts);
+        });
+      }
+
+      // --- Update Alerts Table ---
+      function updateAlertsTable(alerts) {
+        const tbody = document.getElementById("alert-table-body");
+
+        if (!alerts || alerts.length === 0) {
+          tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Không có cảnh báo nào trong thời gian gần đây
+                        </td>
+                    </tr>
+                `;
+          return;
+        }
+
+        let html = "";
+        alerts.forEach((alert, index) => {
+          const time = new Date(alert.timestamp * 1000);
+          const timeStr = time.toLocaleString("vi-VN");
+
+          const badgeClass =
+            alert.action === "BLOCKED" ? "badge-danger" : "badge-success";
+          const badgeIcon =
+            alert.action === "BLOCKED" ? "fa-ban" : "fa-check-circle";
+
+          html += `
+                    <tr class="alert-row">
+                        <td>
+                            <i class="far fa-clock me-1"></i>
+                            ${timeStr}
+                        </td>
+                        <td>
+                            <code class="fw-bold">${alert.ip}</code>
+                        </td>
+                        <td>
+                            <span class="badge-custom ${badgeClass}">
+                                <i class="fas ${badgeIcon} me-1"></i>
+                                ${alert.action}
+                            </span>
+                        </td>
+                        <td>${alert.reason || "Không có mô tả"}</td>
+                    </tr>
+                `;
+        });
+
+        tbody.innerHTML = html;
+      }
+
+      // --- Manual Actions ---
+      function manualAction(type) {
+        const ip = document.getElementById("manual-ip").value.trim();
+        if (!ip) {
+          showAlert("Vui lòng nhập địa chỉ IP!", "warning");
+          return;
+        }
+
+        // Simple IP validation
+        const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+        if (!ipPattern.test(ip)) {
+          showAlert("Địa chỉ IP không hợp lệ!", "danger");
+          return;
+        }
+
+        const actionText = type === "block" ? "chặn" : "gỡ chặn";
+        if (!confirm(`Bạn có chắc chắn muốn ${actionText} IP ${ip}?`)) {
+          return;
+        }
+
+        apiCall("/api/action", "POST", { type: type, ip: ip }).then((res) => {
+          if (res && res.success) {
+            showAlert(res.message, "success");
+            document.getElementById("manual-ip").value = "";
+            updateStatus();
+          } else if (res) {
+            showAlert(res.message, "danger");
+          }
+        });
+      }
+
+      // --- Toggle Service ---
+      function toggleService() {
+        const current = document.getElementById("service-status").innerText;
+        const action = current === "ACTIVE" ? "tắt" : "bật";
+
+        if (!confirm(`Bạn có chắc chắn muốn ${action} dịch vụ Auto-Block?`)) {
+          return;
+        }
+
+        apiCall("/api/action", "POST", {
+          type: "toggle_service",
+          current_status: current,
+        }).then((res) => {
+          if (res && res.success) {
+            showAlert(res.message, "success");
+            setTimeout(updateStatus, 1500);
+          } else if (res) {
+            showAlert(res.message, "danger");
+          }
+        });
+      }
+
+      // --- Load Rules ---
+      function loadRules() {
+        const rulesElement = document.getElementById("iptables-rules");
+        rulesElement.innerHTML =
+          '<i class="fas fa-spinner fa-spin me-2"></i>Đang tải rules...';
+
+        apiCall("/api/rules").then((data) => {
+          if (data && data.rules) {
+            rulesElement.textContent = data.rules;
+            showAlert("Đã cập nhật rules thành công!", "success");
+          } else {
+            rulesElement.textContent = "Không thể tải rules từ hệ thống.";
+          }
+        });
+      }
+
+      // --- Config Management ---
+      function loadConfig() {
+        apiCall("/api/config").then((data) => {
+          if (!data) return;
+
+          document.getElementById("conf-syn").value = data.syn_threshold || 50;
+          document.getElementById("conf-conn").value =
+            data.conn_threshold || 100;
+          document.getElementById("conf-ban").value = data.ban_time || 0;
+          document.getElementById("conf-white").value = (
+            data.whitelist || []
+          ).join(", ");
+
+          showAlert("Đã tải cấu hình thành công!", "success");
+        });
+      }
+
+      function saveConfig() {
+        const config = {
+          syn_threshold:
+            parseInt(document.getElementById("conf-syn").value) || 50,
+          conn_threshold:
+            parseInt(document.getElementById("conf-conn").value) || 100,
+          ban_time: parseInt(document.getElementById("conf-ban").value) || 0,
+          check_interval: 10,
+          whitelist: document
+            .getElementById("conf-white")
+            .value.split(",")
+            .map((s) => s.trim())
+            .filter((s) => s),
+        };
+
+        apiCall("/api/config", "POST", config).then((res) => {
+          if (res && res.success) {
+            showAlert(res.message, "success");
+          } else if (res) {
+            showAlert(res.message, "danger");
+          }
+        });
+      }
+
+      // --- Helper Functions ---
+      function showAlert(message, type) {
+        // Create alert element
+        const alertEl = document.createElement("div");
+        alertEl.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertEl.style.cssText = `
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+
+        const icon =
+          type === "success"
+            ? "fa-check-circle"
+            : type === "danger"
+            ? "fa-exclamation-circle"
+            : type === "warning"
+            ? "fa-exclamation-triangle"
+            : "fa-info-circle";
+
+        alertEl.innerHTML = `
+                <i class="fas ${icon} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+        // Add to page
+        document.body.appendChild(alertEl);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+          if (alertEl.parentNode) {
+            alertEl.remove();
+          }
+        }, 5000);
+      }
+
+      // --- Initialize ---
+      function initDashboard() {
+        // Initial load
+        updateStatus();
+        loadRules();
+        loadConfig();
+
+        // Auto refresh every 5 seconds
+        setInterval(updateStatus, 5000);
+
+        // Add keyboard shortcuts
+        document.addEventListener("keydown", (e) => {
+          // Ctrl+Enter in IP field = block
+          if (e.target.id === "manual-ip" && e.ctrlKey && e.key === "Enter") {
+            manualAction("block");
+          }
+          // F5 = refresh rules
+          if (e.key === "F5") {
+            e.preventDefault();
+            loadRules();
+          }
+        });
+
+        // Focus IP input on tab switch
+        document.getElementById("alerts-tab").addEventListener("click", () => {
+          setTimeout(() => {
+            document.getElementById("manual-ip").focus();
+          }, 300);
+        });
+      }
+
+      // Start everything when page loads
+      document.addEventListener("DOMContentLoaded", initDashboard);
+    </script>
+  </body>
+</html>
